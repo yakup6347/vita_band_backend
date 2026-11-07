@@ -1,0 +1,108 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Kullanıcılar (Hasta, kullanıcı veya hasta yakını)
+model User {
+  id               Int        @id @default(autoincrement())
+  email            String     @unique
+  password         String
+  name             String
+  phone            String?
+  emergencyContact String?    // Acil durumda aranacak numara
+  birthDate        DateTime?
+  gender           String?    // 'MALE', 'FEMALE', 'OTHER'
+  bloodType        String?    // 'A+', '0-', vb.
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+
+  devices          Device[]
+  alerts           Alert[]
+
+  @@map("users")
+}
+
+// Vita Band Cihazları (Bileklikler)
+model Device {
+  id           Int         @id @default(autoincrement())
+  macAddress   String      @unique @map("mac_address") // BLE MAC Adresi
+  deviceName   String      @map("device_name")         // Örn: "VitaBand-Pro"
+  serialNumber String?     @unique @map("serial_number")
+  batteryLevel Int?        @default(100) @map("battery_level")
+  firmwareVer  String?     @map("firmware_version")
+  isOnline     Boolean     @default(false) @map("is_online")
+  lastSyncAt   DateTime?   @map("last_sync_at")
+  userId       Int?        @map("user_id")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  user         User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  telemetry    Telemetry[]
+  alerts       Alert[]
+
+  @@map("devices")
+}
+
+// Sensör Telemetri Verileri (BLE -> Mobil Uygulama -> Backend REST API)
+model Telemetry {
+  id           BigInt    @id @default(autoincrement())
+  deviceId     Int       @map("device_id")
+  heartRate    Float?    @map("heart_rate")   // Nabız (BPM)
+  spo2         Float?    @map("spo2")         // Kandaki Oksijen Oranı (%)
+  temperature  Float?    @map("temperature")  // Vücut Sıcaklığı (°C)
+  stepCount    Int?      @map("step_count")   // Günlük Adım Sayısı
+  calories     Float?    @map("calories")     // Yakılan tahmini kalori
+  fallDetected Boolean   @default(false) @map("fall_detected") // Düşme algılandı mı
+  accelX       Float?    @map("accel_x")      // İvmeölçer X ekseni
+  accelY       Float?    @map("accel_y")      // İvmeölçer Y ekseni
+  accelZ       Float?    @map("accel_z")      // İvmeölçer Z ekseni
+  batteryLevel Int?      @map("battery_level")
+  recordedAt   DateTime  @map("recorded_at")  // Bileklik/Telefonda ölçüldüğü zaman
+  createdAt    DateTime  @default(now()) @map("created_at") // Sunucuya kaydedildiği zaman
+
+  device       Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, recordedAt])
+  @@map("telemetries")
+}
+
+// Kritik Uyarı ve Alarmlar (Düşme, yüksek nabız vb.)
+model Alert {
+  id          Int       @id @default(autoincrement())
+  userId      Int       @map("user_id")
+  deviceId    Int       @map("device_id")
+  type        AlertType
+  severity    Severity  @default(MEDIUM)
+  message     String
+  isResolved  Boolean   @default(false) @map("is_resolved")
+  resolvedAt  DateTime? @map("resolved_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device      Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("alerts")
+}
+
+enum AlertType {
+  FALL_DETECTED       // Düşme algılandı
+  HIGH_HEART_RATE     // Aşırı yüksek nabız (Taşikardi)
+  LOW_HEART_RATE      // Aşırı düşük nabız (Bradikardi)
+  LOW_SPO2            // Düşük oksijen doygunluğu
+  HIGH_TEMPERATURE    // Yüksek ateş
+  PANIC_BUTTON        // Acil durum butonu
+  LOW_BATTERY         // Düşük şarj uyarısı
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
