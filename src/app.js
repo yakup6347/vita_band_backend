@@ -1,28 +1,28 @@
-import express, { Application, Request, Response } from 'express';
+import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import apiRouter from './routes';
-import { errorHandler } from './middlewares/error.middleware';
-import { env } from './config/env';
+import apiRouter from './routes/index.js';
+import { errorHandler } from './middlewares/error.middleware.js';
+import { env } from './config/env.js';
 
-const app: Application = express();
+const app = express();
 
-// Güvenlik ve Yardımcı Middleware'ler
+// Güvenlik ve ara katmanlar
 app.use(helmet());
 app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// HTTP İstek Loglaması
+// HTTP loglama
 if (env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 } else {
   app.use(morgan('combined'));
 }
 
-// Ana karşılama rotası
-app.get('/', (_req: Request, res: Response) => {
+// Ana karşılama endpoint'i
+app.get('/', (_req, res) => {
   res.json({
     message: 'Vita Band IoT Backend API Servisi Çalışıyor 🚀',
     documentation: '/api/v1/health',
@@ -30,11 +30,11 @@ app.get('/', (_req: Request, res: Response) => {
   });
 });
 
-// API Rotaları
+// /api/v1 rotaları
 app.use('/api/v1', apiRouter);
 
-// 404 Bulunamadı Middleware
-app.use((_req: Request, res: Response) => {
+// 404 handler
+app.use((_req, res) => {
   res.status(404).json({
     success: false,
     message: 'İstenen API endpoint bulunamadı',
@@ -42,7 +42,7 @@ app.use((_req: Request, res: Response) => {
   });
 });
 
-// Global Hata Yakalama Middleware'i
+// Global hata yakalama
 app.use(errorHandler);
 
 export default app;

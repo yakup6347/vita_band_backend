@@ -1,17 +1,16 @@
 # 🩺 Vita Band - IoT Akıllı Sağlık Bilekliği Backend API
 
 Bu proje, **Vita Band** IoT akıllı sağlık bilekliği projesinin backend servisidir. 
-Bileklikten Bluetooth (BLE) aracılığıyla Flutter mobil uygulamasına aktarılan sağlık telemetri verilerini (nabız, kandaki oksijen, vücut sıcaklığı, adım, düşme algılama vb.) REST API üzerinden toplar, MySQL veritabanında saklar, eşik değer analizleri yapar ve acil durum uyarıları üretir.
+Bileklikten Bluetooth (BLE) aracılığıyla Flutter mobil uygulamasına aktarılan sağlık telemetri verilerini (nabız, kandaki oksijen, vücut sıcaklığı, adım sayısı, ivmeölçer, düşme algılama vb.) REST API üzerinden toplar, **MySQL** veritabanına doğrudan SQL sorguları (`mysql2`) ile kaydeder, sağlık eşik analizleri yapar ve acil durum uyarıları üretir.
 
 ---
 
 ## 🛠️ Teknoloji Yığını
 
 - **Çalışma Zamanı (Runtime):** Node.js (v20+)
-- **Dil:** TypeScript
+- **Dil:** Saf JavaScript (ES Modules: `import / export`)
 - **Web Framework:** Express.js
-- **Veritabanı & ORM:** MySQL & Prisma ORM
-- **Doğrulama (Validation):** Zod
+- **Veritabanı Sürücüsü:** `mysql2/promise` (Bağlantı Havuzu & Düz SQL Sorguları)
 - **Kimlik Doğrulama:** JWT (JSON Web Tokens) & Bcryptjs
 - **Güvenlik & Loglama:** Helmet, CORS, Morgan
 
@@ -21,54 +20,45 @@ Bileklikten Bluetooth (BLE) aracılığıyla Flutter mobil uygulamasına aktarı
 
 ```text
 vita_band_backend/
-├── prisma/
-│   └── schema.prisma         # Veritabanı modelleri (User, Device, Telemetry, Alert)
+├── schema.sql                # MySQL veritabanı tabloları oluşturma betiği (CREATE TABLE ...)
 ├── src/
-│   ├── config/               # Yapılandırma dosyaları
-│   │   ├── database.ts       # Prisma MySQL bağlantı yöneticisi
-│   │   └── env.ts            # Çevre değişkenleri ve tipleri
-│   ├── constants/            # Sabitler ve sağlık eşik değerleri (nabız, SpO2 limitleri)
-│   │   └── index.ts
+│   ├── config/               # Konfigürasyon
+│   │   ├── db.js             # MySQL bağlantı havuzu (mysql2 pool) ve bağlantı testi
+│   │   └── env.js            # .env değişkenlerinin okunması
+│   ├── constants/            # Sağlık sınırları ve HTTP durum kodları
+│   │   └── index.js          # Nabız, SpO2, ateş limitleri
 │   ├── controllers/          # HTTP isteklerini karşılayan kontrolcüler
-│   │   ├── alert.controller.ts
-│   │   ├── auth.controller.ts
-│   │   ├── device.controller.ts
-│   │   ├── telemetry.controller.ts
-│   │   └── user.controller.ts
+│   │   ├── alert.controller.js    # Acil durum ve uyarılar
+│   │   ├── auth.controller.js     # Kullanıcı kayıt ve giriş
+│   │   ├── device.controller.js   # Bileklik eşleştirme ve durum
+│   │   ├── telemetry.controller.js# Sensör telemetri ölçümleri
+│   │   └── user.controller.js     # Profil işlemleri
 │   ├── middlewares/          # Ara katman yazılımları
-│   │   ├── auth.middleware.ts     # JWT yetkilendirme
-│   │   ├── error.middleware.ts    # Merkezi hata yakalayıcı (Global Error Handler)
-│   │   └── validate.middleware.ts # Zod şema doğrulayıcı
+│   │   ├── auth.middleware.js     # JWT doğrulama kontrolü
+│   │   └── error.middleware.js    # Global hata yakalama
 │   ├── routes/               # API rotaları (/api/v1)
-│   │   ├── alert.routes.ts
-│   │   ├── auth.routes.ts
-│   │   ├── device.routes.ts
-│   │   ├── index.ts          # Ana router toplayıcısı
-│   │   ├── telemetry.routes.ts
-│   │   └── user.routes.ts
-│   ├── services/             # İş mantığı (Business Logic) katmanı
-│   │   ├── alert.service.ts
-│   │   ├── auth.service.ts
-│   │   ├── device.service.ts
-│   │   ├── telemetry.service.ts
-│   │   └── user.service.ts
-│   ├── types/                # TypeScript interface ve tip tanımları
-│   │   └── index.ts
-│   ├── utils/                # Yardımcı fonksiyonlar
-│   │   ├── apiResponse.ts    # Standart JSON yanıt formatlayıcı
-│   │   ├── jwt.ts            # Token üretme ve doğrulama
-│   │   └── password.ts       # Şifre hashleme ve kontrol
-│   ├── validators/           # Zod istek doğrulama şemaları
-│   │   ├── alert.validator.ts
-│   │   ├── auth.validator.ts
-│   │   ├── device.validator.ts
-│   │   └── telemetry.validator.ts
-│   ├── app.ts                # Express uygulama yapılandırması
-│   └── server.ts             # Sunucu başlatıcı (Entry point)
-├── .env.example              # Örnek ortam değişkenleri
+│   │   ├── alert.routes.js
+│   │   ├── auth.routes.js
+│   │   ├── device.routes.js
+│   │   ├── index.js          # Tüm rotaların toplandığı ana yönlendirici
+│   │   ├── telemetry.routes.js
+│   │   └── user.routes.js
+│   ├── services/             # Veritabanı sorguları (Düz SQL) ve iş mantığı
+│   │   ├── alert.service.js       # INSERT/SELECT alerts
+│   │   ├── auth.service.js        # INSERT/SELECT users
+│   │   ├── device.service.js      # INSERT/UPDATE devices
+│   │   ├── telemetry.service.js   # INSERT/SELECT telemetries & eşik kontrolü
+│   │   └── user.service.js        # SELECT/UPDATE users
+│   ├── utils/                # Yardımcı araçlar
+│   │   ├── apiResponse.js    # Standart JSON yanıt formatı
+│   │   ├── jwt.js            # JWT token üretici/doğrulayıcı
+│   │   └── password.js       # Şifre hashleme (bcrypt)
+│   ├── app.js                # Express uygulama yapılandırması
+│   └── server.js             # Sunucu başlatıcı (Entry point)
+├── .env.example              # Örnek çevre değişkenleri
+├── .env                      # Ortam değişkenleri
 ├── .gitignore
 ├── package.json
-├── tsconfig.json
 └── README.md
 ```
 
@@ -82,41 +72,34 @@ npm install
 ```
 
 ### 2. Ortam Değişkenlerini Yapılandırın
-`.env.example` dosyasını kopyalayıp `.env` dosyasını oluşturun veya düzenleyin:
-```bash
-cp .env.example .env
-```
-`.env` içerisindeki `DATABASE_URL` değerini kendi MySQL bağlantınıza göre güncelleyin:
+`.env.example` dosyasını referans alarak `.env` dosyasını oluşturun veya düzenleyin:
 ```env
-DATABASE_URL="mysql://root:sifreniz@localhost:3306/vita_band_db"
 PORT=5000
-JWT_SECRET="guclu_bir_jwt_gizli_anahtari"
+NODE_ENV=development
+
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=sizin_sifreniz
+DB_NAME=vita_band_db
+
+JWT_SECRET=super_gizli_anahtar
+JWT_EXPIRES_IN=7d
+CORS_ORIGIN=*
 ```
 
-### 3. MySQL Veritabanı Entegrasyonu
+### 3. MySQL Tablolarını Oluşturma
+Ekip arkadaşınızın veya sizin MySQL sunucunuzda tabloları hazır hale getirmek için proje kökündeki `schema.sql` dosyasını MySQL Workbench, phpMyAdmin veya terminal üzerinden çalıştırabilirsiniz:
+```bash
+mysql -u root -p < schema.sql
+```
 
-Ekip arkadaşınız MySQL veritabanını hazırladığında iki senaryoyu kullanabilirsiniz:
-
-- **Senaryo A (Hazır şemayı MySQL'e aktarmak için):**
-  ```bash
-  npm run prisma:push
-  ```
-- **Senaryo B (Arkadaşınızın MySQL tablolarını koda çekmek için):**
-  Arkadaşınız tabloları oluşturduysa tek yapmanız gereken:
-  ```bash
-  npm run prisma:pull
-  npm run prisma:generate
-  ```
-- **Veritabanını Arayüzden Görüntülemek için:**
-  ```bash
-  npm run prisma:studio
-  ```
-
-### 4. Geliştirme Sunucusunu Başlatma
+### 4. Sunucuyu Çalıştırma
+Node.js 20'nin dahili izleme modu ile dosya değişikliklerinde otomatik yeniden başlar:
 ```bash
 npm run dev
 ```
-Sunucu varsayılan olarak `http://localhost:5000` adresinde başlayacaktır.
+Sunucu: `http://localhost:5000`
 
 ---
 
@@ -125,54 +108,48 @@ Sunucu varsayılan olarak `http://localhost:5000` adresinde başlayacaktır.
 Tüm API uç noktaları `/api/v1` ön eki ile başlar.
 
 ### 🔐 Kimlik Doğrulama (`/api/v1/auth`)
-| Metot | Endpoint | Açıklama | Auth |
-|---|---|---|---|
-| `POST` | `/api/v1/auth/register` | Yeni kullanıcı kaydı | Hayır |
-| `POST` | `/api/v1/auth/login` | Kullanıcı girişi (JWT token döner) | Hayır |
+| Metot | Endpoint | Açıklama |
+|---|---|---|
+| `POST` | `/api/v1/auth/register` | Yeni kullanıcı kaydı |
+| `POST` | `/api/v1/auth/login` | Giriş yapıp JWT token alma |
 
-### 👤 Kullanıcı İşlemleri (`/api/v1/users`)
-| Metot | Endpoint | Açıklama | Auth |
-|---|---|---|---|
-| `GET` | `/api/v1/users/profile` | Profil bilgilerini ve eşli cihazları getirir | Evet |
-| `PATCH` | `/api/v1/users/profile` | Profil bilgilerini günceller | Evet |
-
-### ⌚ Cihaz / Bileklik Yönetimi (`/api/v1/devices`)
-| Metot | Endpoint | Açıklama | Auth |
-|---|---|---|---|
-| `POST` | `/api/v1/devices/pair` | BLE bilekliği kullanıcıyla eşleştirir | Evet |
-| `GET` | `/api/v1/devices` | Kullanıcının eşli cihazlarını listeler | Evet |
-| `GET` | `/api/v1/devices/:id` | Cihaz detayını ve son ölçümü getirir | Evet |
-| `PATCH` | `/api/v1/devices/:id` | Cihaz durumunu / adını günceller | Evet |
+### ⌚ Cihaz Yönetimi (`/api/v1/devices`)
+| Metot | Endpoint | Açıklama |
+|---|---|---|
+| `POST` | `/api/v1/devices/pair` | BLE bilekliği kullanıcıyla eşleştirme |
+| `GET` | `/api/v1/devices` | Kullanıcının cihazlarını listeleme |
+| `GET` | `/api/v1/devices/:id` | Cihaz detayı ve son ölçüm bilgisi |
+| `PATCH` | `/api/v1/devices/:id` | Cihaz adı veya durumunu güncelleme |
 
 ### 📊 Sensör Telemetrisi (`/api/v1/telemetry`)
-*(Flutter mobil uygulaması BLE üzerinden okuduğu verileri bu endpoint'e gönderir)*
+*(Flutter uygulaması BLE üzerinden okuduğu sağlık verilerini buraya iletir)*
 
-| Metot | Endpoint | Açıklama | Auth |
-|---|---|---|---|
-| `POST` | `/api/v1/telemetry` | Tekil anlık sensör ölçümü kaydeder | Evet |
-| `POST` | `/api/v1/telemetry/batch` | Çevrimdışı birikmiş ölçümleri toplu yükler | Evet |
-| `GET` | `/api/v1/telemetry/:deviceId/history` | Ölçüm geçmişini filtreleyip getirir | Evet |
+| Metot | Endpoint | Açıklama |
+|---|---|---|
+| `POST` | `/api/v1/telemetry` | Anlık tekil sensör ölçümü kaydetme |
+| `POST` | `/api/v1/telemetry/batch` | Birikmiş ölçümleri toplu kaydetme |
+| `GET` | `/api/v1/telemetry/:deviceId/history` | Ölçüm geçmişini filtreleyip alma |
 
-#### Örnek Telemetri POST İsteği Body:
+#### Örnek Telemetri Gönderimi (POST /api/v1/telemetry):
 ```json
 {
   "macAddress": "AA:BB:CC:11:22:33",
-  "heartRate": 78.5,
-  "spo2": 98.2,
+  "heartRate": 82.0,
+  "spo2": 97.5,
   "temperature": 36.6,
-  "stepCount": 4520,
-  "calories": 185.4,
+  "stepCount": 3200,
+  "calories": 145.0,
   "fallDetected": false,
-  "batteryLevel": 85,
+  "batteryLevel": 90,
   "recordedAt": "2026-11-07T14:30:00.000Z"
 }
 ```
 
 ### 🚨 Acil Durum & Uyarılar (`/api/v1/alerts`)
-*(Düşme, aşırı yüksek/düşük nabız, kritik SpO2 gibi durumlar otomatik olarak veya panik butonu ile tetiklenir)*
+*(Düşme veya kritik nabız gibi durumlarda telemetri servisi tarafından otomatik tetiklenir veya panik butonu ile manuel açılır)*
 
-| Metot | Endpoint | Açıklama | Auth |
-|---|---|---|---|
-| `GET` | `/api/v1/alerts` | Kullanıcının alarmlarını listeler (`?resolved=false`) | Evet |
-| `POST` | `/api/v1/alerts` | Manuel acil durum / panik butonu uyarısı oluşturur | Evet |
-| `PATCH` | `/api/v1/alerts/:id/resolve` | Alarmı çözüldü olarak işaretler | Evet |
+| Metot | Endpoint | Açıklama |
+|---|---|---|
+| `GET` | `/api/v1/alerts` | Aktif / çözülmüş uyarıları listeleme |
+| `POST` | `/api/v1/alerts` | Manuel panik butonu / acil durum uyarısı |
+| `PATCH` | `/api/v1/alerts/:id/resolve` | Uyarıyı çözüldü olarak işaretleme |

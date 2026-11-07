@@ -1,17 +1,17 @@
 import { Router } from 'express';
-import authRoutes from './auth.routes';
-import userRoutes from './user.routes';
-import deviceRoutes from './device.routes';
-import telemetryRoutes from './telemetry.routes';
-import alertRoutes from './alert.routes';
+import authRoutes from './auth.routes.js';
+import userRoutes from './user.routes.js';
+import deviceRoutes from './device.routes.js';
+import telemetryRoutes from './telemetry.routes.js';
+import alertRoutes from './alert.routes.js';
 
 const router = Router();
 
-// API Health Check & Info
+// Sağlık kontrolü
 router.get('/health', (_req, res) => {
   res.json({
     status: 'ok',
-    project: 'Vita Band IoT Backend',
+    project: 'Vita Band IoT Backend API (Pure JS + MySQL)',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
   });

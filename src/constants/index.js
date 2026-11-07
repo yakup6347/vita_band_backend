@@ -7,11 +7,10 @@ export const HTTP_STATUS = {
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   CONFLICT: 409,
-  UNPROCESSABLE_ENTITY: 422,
   INTERNAL_SERVER_ERROR: 500,
-} as const;
+};
 
-// Vita Band Sağlık Eşik Değerleri (Uyarı tetikleme kuralları)
+// Vita Band Sağlık Eşik Değerleri (Otomatik Alarm Üretimi)
 export const HEALTH_THRESHOLDS = {
   HEART_RATE: {
     MIN_NORMAL: 50,  // BPM
@@ -21,17 +20,14 @@ export const HEALTH_THRESHOLDS = {
   },
   SPO2: {
     MIN_NORMAL: 95, // %
-    WARNING_LOW: 92,
     CRITICAL_LOW: 88,
   },
   TEMPERATURE: {
     MIN_NORMAL: 35.5, // °C
     MAX_NORMAL: 37.5,
-    FEVER: 38.0,
-    HIGH_FEVER: 39.0,
+    HIGH_FEVER: 38.5,
   },
   BATTERY: {
-    LOW_WARNING: 20, // %
-    CRITICAL_LOW: 10,
+    CRITICAL_LOW: 15, // %
   },
 };
