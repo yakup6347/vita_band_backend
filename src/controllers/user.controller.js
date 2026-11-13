@@ -1,24 +1,14 @@
 import { UserService } from '../services/user.service.js';
 import { sendSuccess } from '../utils/apiResponse.js';
+import { HTTP_STATUS } from '../constants/index.js';
 
 export class UserController {
-  static async getProfile(req, res, next) {
+  static async getMe(req, res, next) {
     try {
-      const userId = req.user.userId;
-      const profile = await UserService.getProfile(userId);
-      return sendSuccess(res, profile, 'Kullanıcı profili getirildi');
+      const user = await UserService.getMe(req.user.id);
+      return sendSuccess(res, user, 'Kullanıcı bilgileri getirildi.', HTTP_STATUS.OK);
     } catch (error) {
-      next(error);
-    }
-  }
-
-  static async updateProfile(req, res, next) {
-    try {
-      const userId = req.user.userId;
-      const updated = await UserService.updateProfile(userId, req.body);
-      return sendSuccess(res, updated, 'Profil güncellendi');
-    } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 }

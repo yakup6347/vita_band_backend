@@ -1,14 +1,11 @@
 import { Router } from 'express';
 import { DeviceController } from '../controllers/device.controller.js';
-import { authenticate } from '../middlewares/auth.middleware.js';
+import { MeasurementController } from '../controllers/measurement.controller.js';
+import { authenticateDevice, authenticateUser } from '../middlewares/auth.middleware.js';
 
-const router = Router();
+export const devicesRouter = Router();
+devicesRouter.post('/', authenticateUser, DeviceController.addDevice);
 
-router.use(authenticate);
-
-router.post('/pair', DeviceController.pairDevice);
-router.get('/', DeviceController.getMyDevices);
-router.get('/:id', DeviceController.getDeviceDetails);
-router.patch('/:id', DeviceController.updateDevice);
-
-export default router;
+export const deviceAgentRouter = Router();
+deviceAgentRouter.post('/heartbeat', authenticateDevice, DeviceController.heartbeat);
+deviceAgentRouter.post('/measurements', authenticateDevice, MeasurementController.record);

@@ -1,7 +1,7 @@
 import mysql from 'mysql2/promise';
 import { env } from './env.js';
 
-// MySQL Bağlantı Havuzu (Connection Pool)
+// MySQL Bağlantı Havuzu (UTC zorunlu, BIGINT/DECIMAL uyumlu)
 export const pool = mysql.createPool({
   host: env.DB.host,
   port: env.DB.port,
@@ -11,19 +11,29 @@ export const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  timezone: 'Z',
+  decimalNumbers: true,
+  supportBigNumbers: true,
+  bigNumberStrings: true,
+});
+
+// Her yeni fiziksel bağlantıda oturum saat dilimini UTC olarak sabitle
+pool.on('connection', (connection) => {
+  connection.query("SET time_zone = '+00:00'");
 });
 
 // Veritabanı bağlantı testi
 export const testDatabaseConnection = async () => {
   try {
     const connection = await pool.getConnection();
-    console.log(`✅ MySQL Veritabanına başarıyla bağlanıldı! [${env.DB.database} @ ${env.DB.host}:${env.DB.port}]`);
+    await connection.query("SET time_zone = '+00:00'");
+    console.log(
+      `✅ MySQL veritabanına bağlanıldı [${env.DB.database} @ ${env.DB.host}:${env.DB.port}]`
+    );
     connection.release();
     return true;
   } catch (error) {
-    console.warn(`⚠️ MySQL Bağlantı uyarısı: ${error.message}`);
-    console.warn(`👉 MySQL henüz çalışmıyor veya veritabanı '${env.DB.database}' henüz oluşturulmamış olabilir.`);
-    console.warn(`👉 Ekip arkadaşınız veritabanını hazırladığında .env dosyasındaki DB_* ayarlarını güncelleyebilirsiniz.`);
+    console.error(`❌ MySQL bağlantı hatası: ${error.message}`);
     return false;
   }
 };

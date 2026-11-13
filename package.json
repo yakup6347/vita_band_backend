@@ -1,15 +1,17 @@
 {
   "name": "vita-band-backend",
-  "version": "1.0.0",
-  "description": "Vita Band IoT Smart Wristband Backend API (Express + Pure JavaScript + MySQL)",
+  "version": "1.1.0",
+  "description": "ÜLGEN IoT Smart Wristband Backend API (Express + Pure JavaScript + MySQL)",
   "main": "src/server.js",
   "type": "module",
   "scripts": {
     "dev": "node --watch src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "test": "node tests/api.test.js"
   },
   "keywords": [
     "iot",
+    "ulgen",
     "vita-band",
     "express",
     "javascript",
@@ -18,7 +20,7 @@
     "health-monitoring",
     "wearable"
   ],
-  "author": "Vita Band Team",
+  "author": "ÜLGEN / Vita Band Team",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -28,6 +30,7 @@
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
-    "mysql2": "^3.11.4"
+    "mysql2": "^3.11.4",
+    "swagger-ui-express": "^5.0.1"
   }
 }

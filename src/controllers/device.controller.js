@@ -3,49 +3,30 @@ import { sendSuccess } from '../utils/apiResponse.js';
 import { HTTP_STATUS } from '../constants/index.js';
 
 export class DeviceController {
-  // Cihazı kullanıcıyla eşleştir
-  static async pairDevice(req, res, next) {
+  static async addDevice(req, res, next) {
     try {
-      const userId = req.user.userId;
-      const device = await DeviceService.pairDevice(userId, req.body);
-      return sendSuccess(res, device, 'Cihaz başarıyla eşleştirildi', HTTP_STATUS.CREATED);
+      const data = await DeviceService.addDevice(req.user.id, req.body || {});
+      return sendSuccess(res, data, 'Cihaz başarıyla eklendi.', HTTP_STATUS.CREATED);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
-  // Kullanıcının cihazlarını listele
   static async getMyDevices(req, res, next) {
     try {
-      const userId = req.user.userId;
-      const devices = await DeviceService.getUserDevices(userId);
-      return sendSuccess(res, devices, 'Cihazlar listelendi');
+      const data = await DeviceService.getUserDevices(req.user.id);
+      return sendSuccess(res, data, 'Cihazlar getirildi.', HTTP_STATUS.OK);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
-  // Cihaz detayı
-  static async getDeviceDetails(req, res, next) {
+  static async heartbeat(req, res, next) {
     try {
-      const userId = req.user.userId;
-      const deviceId = parseInt(req.params.id, 10);
-      const device = await DeviceService.getDeviceDetails(userId, deviceId);
-      return sendSuccess(res, device, 'Cihaz detayları getirildi');
+      const data = await DeviceService.heartbeat(req.device.id, req.body || {});
+      return sendSuccess(res, data, 'Cihaz durumu güncellendi.', HTTP_STATUS.OK);
     } catch (error) {
-      next(error);
-    }
-  }
-
-  // Cihaz güncelle
-  static async updateDevice(req, res, next) {
-    try {
-      const userId = req.user.userId;
-      const deviceId = parseInt(req.params.id, 10);
-      const updated = await DeviceService.updateDevice(userId, deviceId, req.body);
-      return sendSuccess(res, updated, 'Cihaz bilgileri güncellendi');
-    } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 }

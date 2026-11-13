@@ -7,27 +7,28 @@ export const HTTP_STATUS = {
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   CONFLICT: 409,
+  UNPROCESSABLE_ENTITY: 422,
   INTERNAL_SERVER_ERROR: 500,
 };
 
-// Vita Band Sağlık Eşik Değerleri (Otomatik Alarm Üretimi)
-export const HEALTH_THRESHOLDS = {
-  HEART_RATE: {
-    MIN_NORMAL: 50,  // BPM
-    MAX_NORMAL: 110, // BPM
-    CRITICAL_HIGH: 140,
-    CRITICAL_LOW: 40,
-  },
-  SPO2: {
-    MIN_NORMAL: 95, // %
-    CRITICAL_LOW: 88,
-  },
-  TEMPERATURE: {
-    MIN_NORMAL: 35.5, // °C
-    MAX_NORMAL: 37.5,
-    HIGH_FEVER: 38.5,
-  },
-  BATTERY: {
-    CRITICAL_LOW: 15, // %
-  },
+export const ERROR_CODES = {
+  BAD_REQUEST: 'BAD_REQUEST',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  FORBIDDEN: 'FORBIDDEN',
+  NOT_FOUND: 'NOT_FOUND',
+  CONFLICT: 'CONFLICT',
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+  INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
 };
+
+export const EVENT_TYPES = [
+  'fall',
+  'high_heart_rate',
+  'low_heart_rate',
+  'low_spo2',
+  'high_stress',
+];
+
+export const EVENT_STATUSES = ['pending', 'cancelled', 'escalated', 'resolved'];
+
+export const ACCESS_STATUSES = ['pending', 'accepted', 'rejected', 'revoked'];
